@@ -9,11 +9,20 @@ let gameActive = true;
 let cells = []; // Array to store cell DOM elements
 let boardState = Array(9).fill(''); // ['', '', '', '', '', '', '', '', '']
 let isAITurn = false;
+let winningLine = null; // To store the current winning combination for drawing line
 
 const winningCombinations = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-    [0, 4, 8], [2, 4, 6]           // Diagonals
+    // Rows
+    { id: 'row-0', combo: [0, 1, 2], type: 'row', index: 0 },
+    { id: 'row-1', combo: [3, 4, 5], type: 'row', index: 1 },
+    { id: 'row-2', combo: [6, 7, 8], type: 'row', index: 2 },
+    // Columns
+    { id: 'col-0', combo: [0, 3, 6], type: 'col', index: 0 },
+    { id: 'col-1', combo: [1, 4, 7], type: 'col', index: 1 },
+    { id: 'col-2', combo: [2, 5, 8], type: 'col', index: 2 },
+    // Diagonals
+    { id: 'diag-0', combo: [0, 4, 8], type: 'diag', index: 0 }, // Top-left to bottom-right
+    { id: 'diag-1', combo: [2, 4, 6], type: 'diag', index: 1 }  // Top-right to bottom-left
 ];
 
 function createBoard() {
@@ -52,10 +61,15 @@ function makeMove(index, player) {
 
     boardState[index] = player;
     cells[index].textContent = player;
+    cells[index].classList.add(player); // Add class for X or O styling
 
-    if (checkWin(player)) {
+    const winCheck = checkWin(player);
+    if (winCheck.isWin) {
         statusText.textContent = `${player === 'X' ? 'Player X' : 'AI (O)'} wins!`;
         gameActive = false;
+        winningLine = winCheck.combination; // Store the winning combination object
+        drawWinningLine();
+        triggerWinAnimation(player); // Trigger confetti and text animation
         enableBoardClicks(); // Re-enable clicks if game ends
         return true;
     }
@@ -75,10 +89,109 @@ function makeMove(index, player) {
 }
 
 function checkWin(player) {
-    return winningCombinations.some(combination => {
-        return combination.every(index => boardState[index] === player);
-    });
+    for (const combination of winningCombinations) {
+        if (combination.combo.every(index => boardState[index] === player)) {
+            return { isWin: true, combination: combination };
+        }
+    }
+    return { isWin: false, combination: null };
 }
+
+function drawWinningLine() {
+    if (!winningLine) return;
+
+    const lineElement = document.createElement('div');
+    lineElement.classList.add('winning-line');
+    lineElement.id = 'current-winning-line'; // To easily remove later
+
+    // Calculate cell size and gap (assuming board is responsive)
+    const boardWidth = boardElement.offsetWidth;
+    const cellWidth = (boardWidth - 2 * 10) / 3; // 10px gap, 3 cells
+    const cellHeight = cellWidth; // Assuming square cells
+    const gap = 10;
+
+    const { type, index: comboIndex } = winningLine;
+
+    lineElement.style.backgroundColor = currentPlayer === 'X' ? 'rgba(0, 123, 255, 0.7)' : 'rgba(253, 126, 20, 0.7)';
+
+
+    if (type === 'row') {
+        lineElement.style.width = '90%';
+        lineElement.style.height = '8px';
+        lineElement.style.top = `${comboIndex * (cellHeight + gap) + cellHeight / 2 - 4}px`;
+        lineElement.style.left = '5%';
+        lineElement.style.transform = 'translateY(-50%)';
+    } else if (type === 'col') {
+        lineElement.style.width = '8px';
+        lineElement.style.height = '90%';
+        lineElement.style.left = `${comboIndex * (cellWidth + gap) + cellWidth / 2 - 4}px`;
+        lineElement.style.top = '5%';
+        lineElement.style.transform = 'translateX(-50%)';
+    } else if (type === 'diag') {
+        lineElement.style.width = '120%'; // Longer for diagonal
+        lineElement.style.height = '8px';
+        lineElement.style.top = '50%';
+        lineElement.style.left = '-10%'; // Start from outside
+        if (comboIndex === 0) { // Top-left to bottom-right
+            lineElement.style.transform = 'translateY(-50%) rotate(45deg)';
+        } else { // Top-right to bottom-left (diag-1)
+            lineElement.style.transform = 'translateY(-50%) rotate(-45deg)';
+        }
+    }
+    boardElement.appendChild(lineElement);
+}
+
+function removeWinningLine() {
+    const existingLine = document.getElementById('current-winning-line');
+    if (existingLine) {
+        existingLine.remove();
+    }
+    winningLine = null;
+}
+
+function triggerWinAnimation(winner) {
+    // Winner text animation
+    statusText.classList.add(winner === 'X' ? 'winner-text-x' : 'winner-text-o');
+
+    // Confetti animation
+    const confettiContainer = document.createElement('div');
+    confettiContainer.classList.add('confetti-container');
+    confettiContainer.id = 'confetti-throw'; // To remove it later
+    document.body.appendChild(confettiContainer);
+
+    const confettiColors = ['#007bff', '#fd7e14', '#28a745', '#ffc107', '#dc3545', '#17a2b8'];
+    for (let i = 0; i < 100; i++) { // Create 100 pieces of confetti
+        const confettiPiece = document.createElement('div');
+        confettiPiece.classList.add('confetti');
+        confettiPiece.style.left = Math.random() * 100 + 'vw'; // Random horizontal start
+        confettiPiece.style.animationDelay = Math.random() * 2 + 's'; // Random delay
+        confettiPiece.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+        // Vary size and shape slightly for more visual interest
+        const size = Math.random() * 8 + 4; // Size between 4px and 12px
+        confettiPiece.style.width = size + 'px';
+        confettiPiece.style.height = size * (Math.random() * 0.5 + 0.75) + 'px'; // Slightly rectangular
+        confettiPiece.style.transform = `translateY(-10vh) rotateZ(${Math.random() * 360}deg)`;
+
+
+        confettiContainer.appendChild(confettiPiece);
+    }
+
+    // Remove confetti container after animation finishes (e.g., 3s for fall + 2s delay = 5s)
+    setTimeout(() => {
+        if (confettiContainer) {
+            confettiContainer.remove();
+        }
+    }, 5000);
+}
+
+function resetWinAnimation() {
+    statusText.classList.remove('winner-text-x', 'winner-text-o');
+    const confettiContainer = document.getElementById('confetti-throw');
+    if (confettiContainer) {
+        confettiContainer.remove();
+    }
+}
+
 
 function disableBoardClicks() {
     cells.forEach(cell => cell.style.pointerEvents = 'none');
@@ -91,8 +204,11 @@ function enableBoardClicks() {
 
 async function getAIMove() {
     const apiKey = apiKeyInput.value.trim();
-    if (!apiKey) {
-        alert("Please enter your Gemini API Key.");
+    if (!apiKey && currentPlayer === 'O') { // Only ask for key if AI needs to make a move
+        // Avoid alert if human wins and AI doesn't need to move
+        if (gameActive) {
+            alert("Please enter your Gemini API Key to enable AI moves. Falling back to random.");
+        }
         statusText.textContent = "API Key required for AI move. Falling back to random.";
         console.warn("API Key missing. AI falling back to random move.");
         makeRandomMove();
@@ -202,6 +318,8 @@ function resetGame() {
     currentPlayer = 'X';
     gameActive = true;
     isAITurn = false;
+    removeWinningLine(); // Remove the line before creating a new board
+    resetWinAnimation(); // Reset confetti and text animations
     createBoard(); // This also resets boardState
     statusText.textContent = `Player ${currentPlayer}'s turn`;
     enableBoardClicks();
