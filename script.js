@@ -2,7 +2,7 @@ const boardElement = document.getElementById('board');
 const statusText = document.getElementById('status');
 const resetButton = document.getElementById('reset');
 const difficultySelect = document.getElementById('difficulty');
-const apiKeyInput = document.getElementById('apiKey');
+// const apiKeyInput = document.getElementById('apiKey'); // Removed
 
 let currentPlayer = 'X'; // X is human, O is AI
 let gameActive = true;
@@ -52,7 +52,7 @@ function handleCellClick(e) {
         isAITurn = true;
         statusText.textContent = `AI (O) is thinking...`;
         disableBoardClicks();
-        setTimeout(getAIMove, 700); // Add a slight delay for UX
+        setTimeout(makeLocalAIMove, 700); // Updated function name
     }
 }
 
@@ -201,116 +201,204 @@ function enableBoardClicks() {
     cells.forEach(cell => cell.style.pointerEvents = 'auto');
 }
 
-
-async function getAIMove() {
-    const apiKey = apiKeyInput.value.trim();
-    if (!apiKey && currentPlayer === 'O') { // Only ask for key if AI needs to make a move
-        // Avoid alert if human wins and AI doesn't need to move
-        if (gameActive) {
-            alert("Please enter your Gemini API Key to enable AI moves. Falling back to random.");
-        }
-        statusText.textContent = "API Key required for AI move. Falling back to random.";
-        console.warn("API Key missing. AI falling back to random move.");
-        makeRandomMove();
-        isAITurn = false;
-        enableBoardClicks();
-        return;
-    }
-
+// Renamed to reflect it's now local AI, not fetching from API
+async function makeLocalAIMove() {
     const difficulty = difficultySelect.value;
-    const boardString = boardState.map(s => s || '_').join(''); // Convert board to string like "X_O__XO_X"
+    // statusText.textContent = `AI (${currentPlayer}) is thinking...`; // Already set in handleCellClick
 
-    // --- THIS IS A PLACEHOLDER FOR GEMINI API ---
-    // Replace with actual Gemini API call structure
-    // For now, we'll simulate different difficulties with a random move or a slightly better one.
-    console.log(`Calling Gemini (simulated) with board: ${boardString}, difficulty: ${difficulty}`);
-
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Simulate AI thinking delay
+    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400)); // Shorter, slightly variable delay
 
     let aiMoveIndex = -1;
 
-    // Placeholder logic for difficulty - replace with actual API interaction
     if (difficulty === "easy") {
-        aiMoveIndex = findRandomMove();
+        aiMoveIndex = findRandomEmptyCell();
     } else if (difficulty === "medium") {
-        // Try to find a winning move, then a blocking move, then random
-        aiMoveIndex = findWinningMove('O') ?? findBlockingMove('X') ?? findRandomMove();
-    } else { // hard
-        // For "hard", ideally, the Gemini API would provide the optimal move.
-        // As a placeholder, let's use the same logic as medium, or a more sophisticated local minimax if available.
-        // For now, just more advanced local logic as placeholder.
-        aiMoveIndex = findWinningMove('O') ?? findBlockingMove('X') ?? findBestMoveStrategically() ?? findRandomMove();
+        // Try to find a winning move for AI, then a blocking move against Player, then strategic, then random
+        aiMoveIndex = findWinningMove('O') ?? findBlockingMove('X') ?? findBestMoveStrategically() ?? findRandomEmptyCell();
+    } else { // hard - This will be replaced by Minimax
+        // For now, using the same as medium as a temporary placeholder before Minimax is added.
+        // aiMoveIndex = findWinningMove('O') ?? findBlockingMove('X') ?? findBestMoveStrategically() ?? findRandomEmptyCell();
+        // Placeholder for Minimax call:
+        aiMoveIndex = findBestMoveUsingMinimax(); // This function will be implemented next
     }
-
 
     if (aiMoveIndex !== -1 && boardState[aiMoveIndex] === '') {
         makeMove(aiMoveIndex, 'O');
     } else {
-        // Fallback if API (or simulated logic) fails or returns invalid move
-        console.error("AI failed to make a valid move, or API error. Falling back to random.");
-        makeRandomMove();
+        // Fallback if AI logic somehow fails (e.g. no empty cells but game active, or minimax returns error)
+        console.error("AI failed to make a valid move. Attempting random fallback.");
+        const randomFallbackMove = findRandomEmptyCell();
+        if (randomFallbackMove !== -1) {
+            makeMove(randomFallbackMove, 'O');
+        } else {
+            console.error("AI Critical Error: No empty cells for fallback move. Game state:", boardState);
+            // This case should ideally not be reached if game logic is correct.
+        }
     }
 
     isAITurn = false;
     enableBoardClicks();
-    if (gameActive && currentPlayer === 'X') { // Ensure it's player's turn text if game is still on
-        statusText.textContent = `Player X's turn`;
+    // Status update for player's turn is handled by makeMove if game is still active
+}
+
+// Renamed from makeRandomMove for clarity, as it's a specific part of AI strategy now
+function makeAIMoveAtEmptyCell(indexToMove) {
+    if (indexToMove !== -1 && boardState[indexToMove] === '') {
+        makeMove(indexToMove, 'O');
+    } else {
+        // Fallback if a specific move is invalid (should ideally not happen with correct logic)
+        const randomMove = findRandomEmptyCell();
+        if (randomMove !== -1) makeMove(randomMove, 'O');
     }
 }
 
-function makeRandomMove() {
+// Renamed from findRandomMove for clarity
+function findRandomEmptyCell() {
     const emptyCellsIndexes = boardState.map((val, idx) => val === '' ? idx : -1).filter(idx => idx !== -1);
     if (emptyCellsIndexes.length > 0) {
-        const randomIndex = emptyCellsIndexes[Math.floor(Math.random() * emptyCellsIndexes.length)];
-        makeMove(randomIndex, 'O');
+        return emptyCellsIndexes[Math.floor(Math.random() * emptyCellsIndexes.length)];
     }
+    return -1; // No empty cells
 }
 
-function findWinningMove(player) {
+// This is the main checkWin that operates on the global boardState
+function checkWin(player) {
+    for (const combination of winningCombinations) {
+        if (combination.combo.every(index => boardState[index] === player)) {
+            return { isWin: true, combination: combination };
+        }
+    }
+    return { isWin: false, combination: null };
+}
+
+
+// Helper function to check win on an arbitrary board array (e.g. a copy for AI simulation)
+function checkWinInternal(board, player) {
+    for (const combination of winningCombinations) {
+        if (combination.combo.every(index => board[index] === player)) {
+            return { isWin: true, combination: combination };
+        }
+    }
+    return { isWin: false, combination: null };
+}
+
+
+function findWinningMove(player, currentBoard = boardState) {
     for (let i = 0; i < 9; i++) {
-        if (boardState[i] === '') {
-            boardState[i] = player;
-            if (checkWin(player)) {
-                boardState[i] = ''; // backtrack
+        if (currentBoard[i] === '') {
+            currentBoard[i] = player;
+            if (checkWinInternal(currentBoard, player).isWin) { // Use internal check for arbitrary boards
+                currentBoard[i] = ''; // backtrack
                 return i;
             }
-            boardState[i] = ''; // backtrack
+            currentBoard[i] = ''; // backtrack
         }
     }
     return null;
 }
 
-function findBlockingMove(opponent) {
-    return findWinningMove(opponent); // If opponent can win in next move, block it
+function findBlockingMove(opponentPlayer, currentBoard = boardState) {
+    return findWinningMove(opponentPlayer, currentBoard);
 }
 
-function findBestMoveStrategically() {
+function findBestMoveStrategically(currentBoard = boardState) {
     // Simple strategic moves: take center if available, then corners, then sides
     const center = 4;
-    if (boardState[center] === '') return center;
+    if (currentBoard[center] === '') return center;
 
     const corners = [0, 2, 6, 8];
-    const availableCorners = corners.filter(idx => boardState[idx] === '');
+    const availableCorners = corners.filter(idx => currentBoard[idx] === '');
     if (availableCorners.length > 0) {
         return availableCorners[Math.floor(Math.random() * availableCorners.length)];
     }
 
     const sides = [1, 3, 5, 7];
-    const availableSides = sides.filter(idx => boardState[idx] === '');
+    const availableSides = sides.filter(idx => currentBoard[idx] === '');
     if (availableSides.length > 0) {
         return availableSides[Math.floor(Math.random() * availableSides.length)];
     }
-    return null; // Should not happen if findRandomMove is a fallback
+    return null;
 }
 
+// findRandomMove function removed as it's a duplicate of findRandomEmptyCell (after correction)
 
-function findRandomMove() {
-    const emptyCellsIndexes = boardState.map((val, idx) => val === '' ? idx : -1).filter(idx => idx !== -1);
-    if (emptyCellsIndexes.length > 0) {
-        return emptyCellsIndexes[Math.floor(Math.random() * emptyCellsIndexes.length)];
+// Minimax Implementation
+const AI_PLAYER = 'O';
+const HUMAN_PLAYER = 'X';
+
+function getEmptyCellIndices(board) {
+    return board.reduce((acc, cell, index) => {
+        if (cell === '') acc.push(index);
+        return acc;
+    }, []);
+}
+
+// The main minimax function
+function minimax(currentBoard, depth, isMaximizingPlayer) {
+    // Check for terminal states (win, loss, draw)
+    const humanWinDetails = checkWinInternal(currentBoard, HUMAN_PLAYER);
+    if (humanWinDetails.isWin) {
+        return -10 + depth; // Prioritize faster losses for the opponent (AI perspective)
     }
-    return -1; // Should not happen if game ends correctly
+
+    const aiWinDetails = checkWinInternal(currentBoard, AI_PLAYER);
+    if (aiWinDetails.isWin) {
+        return 10 - depth; // Prioritize faster wins for AI
+    }
+
+    const emptyCells = getEmptyCellIndices(currentBoard);
+    if (emptyCells.length === 0) {
+        return 0; // Draw
+    }
+
+    // Recursive calls for AI (Maximizer) and Human (Minimizer)
+    if (isMaximizingPlayer) { // AI's turn
+        let bestScore = -Infinity;
+        for (const cellIndex of emptyCells) {
+            currentBoard[cellIndex] = AI_PLAYER;
+            let score = minimax(currentBoard, depth + 1, false); // Next turn is human (minimizer)
+            currentBoard[cellIndex] = ''; // Undo the move
+            bestScore = Math.max(score, bestScore);
+        }
+        return bestScore;
+    } else { // Human's turn
+        let bestScore = Infinity;
+        for (const cellIndex of emptyCells) {
+            currentBoard[cellIndex] = HUMAN_PLAYER;
+            let score = minimax(currentBoard, depth + 1, true); // Next turn is AI (maximizer)
+            currentBoard[cellIndex] = ''; // Undo the move
+            bestScore = Math.min(score, bestScore);
+        }
+        return bestScore;
+    }
+}
+
+function findBestMoveUsingMinimax() {
+    let bestScore = -Infinity;
+    let bestMove = -1;
+    const tempBoard = [...boardState]; // Create a copy of the current board state
+
+    const emptyCells = getEmptyCellIndices(tempBoard);
+
+    if (emptyCells.length === 9) { // If board is empty, AI can take center or a corner for speed.
+      return 4; // Center is generally a strong opening move.
+    }
+
+
+    for (const cellIndex of emptyCells) {
+        tempBoard[cellIndex] = AI_PLAYER; // AI makes a move
+        // Score is evaluated from the perspective of the next player (human, so isMaximizingPlayer = false)
+        let moveScore = minimax(tempBoard, 0, false);
+        tempBoard[cellIndex] = ''; // Undo the move
+
+        if (moveScore > bestScore) {
+            bestScore = moveScore;
+            bestMove = cellIndex;
+        }
+    }
+    // console.log(`Minimax best move: ${bestMove} with score: ${bestScore}`);
+    return bestMove !== -1 ? bestMove : findRandomEmptyCell(); // Fallback, though Minimax should always find a move.
 }
 
 
@@ -328,16 +416,10 @@ function resetGame() {
 // Initial setup
 createBoard();
 resetButton.addEventListener('click', resetGame);
-apiKeyInput.addEventListener('change', () => {
-    if(gameActive && currentPlayer === 'O' && isAITurn) {
-        // If API key is entered while AI is "thinking" and was waiting for key
-        // Potentially re-trigger AI move or just let the next turn handle it.
-        // For simplicity, we'll let the next AI turn attempt with the new key.
-        statusText.textContent = "API Key updated. AI will use it on its next turn.";
-    }
-});
+// apiKeyInput event listener removed
 difficultySelect.addEventListener('change', () => {
     // Optionally, reset the game if difficulty changes mid-game, or just apply to next game.
     // For now, it applies to the next AI move or game.
+    // Could also add: if (gameActive) resetGame(); to apply to a fresh game.
     console.log("Difficulty changed to: ", difficultySelect.value);
 });
