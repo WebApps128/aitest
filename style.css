@@ -1,88 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f0f0;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f8f9fa; /* Light grayish background */
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
+    color: #212529; /* Darker text for better contrast */
 }
 
 .game-container {
     text-align: center;
-    background: #fff;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    background: #ffffff; /* White container background */
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 420px; /* Max width for the game container */
+}
+
+h1 {
+    color: #007bff; /* Primary color for heading */
+    margin-bottom: 1.5rem;
+    font-weight: 600;
 }
 
 .controls {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: stretch; /* Make controls take full width */
+    gap: 0.8rem;
+}
+
+.controls div {
+    display: flex;
+    flex-direction: column; /* Stack label and input vertically on small screens */
+    align-items: flex-start; /* Align labels to the start */
+    gap: 0.3rem;
 }
 
 .controls label {
-    margin-right: 0.5rem;
     font-size: 0.9rem;
+    color: #495057; /* Slightly lighter label color */
+    font-weight: 400;
 }
 
 .controls select, .controls input[type="text"] {
-    padding: 0.3rem 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #ced4da; /* Standard border color */
+    font-size: 0.95rem;
+    width: 100%; /* Make inputs take full width of their container */
+    box-sizing: border-box;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.controls input[type="text"] {
-    width: 200px; /* Adjust as needed */
+.controls select:focus, .controls input[type="text"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    outline: none;
 }
-
 
 #board {
     display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
-    gap: 5px;
-    margin: 1rem auto;
-    width: fit-content;
+    grid-template-columns: repeat(3, 1fr); /* Use fraction units for responsive cells */
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px; /* Increased gap */
+    margin: 2rem auto;
+    width: 100%; /* Board takes full width of its constrained parent */
+    aspect-ratio: 1 / 1; /* Keep board square */
+    max-width: 330px; /* Max width for the board itself */
+    position: relative; /* For win line positioning */
 }
 
 .cell {
-    width: 100px;
-    height: 100px;
-    background: #e0e0e0;
+    background: #ffffff; /* White cells */
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2rem;
+    font-size: 3rem; /* Larger X/O */
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s;
+    border-radius: 8px; /* Rounded corners for cells */
+    border: 1px solid #dee2e6; /* Lighter border for cells */
+    transition: background 0.2s ease-in-out, transform 0.1s ease;
+    color: #212529; /* Default text color for X/O before specific styling */
 }
 
 .cell:hover {
-    background: #d0d0d0;
+    background: #e9ecef; /* Light gray hover */
+    transform: scale(1.03); /* Slight scale effect on hover */
 }
+
+.cell.X {
+    color: #007bff; /* Blue for X */
+}
+
+.cell.O {
+    color: #fd7e14; /* Orange for O */
+}
+
 
 #status {
-    font-size: 1.2rem;
-    margin: 1rem 0;
+    font-size: 1.25rem;
+    margin: 1.5rem 0;
+    min-height: 1.5em; /* Prevent layout shift */
+    font-weight: 600;
+    color: #495057;
 }
 
-button {
-    padding: 0.5rem 1rem;
+#reset {
+    padding: 0.75rem 1.5rem;
     font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     border: none;
-    border-radius: 5px;
-    background: #007bff;
+    border-radius: 6px;
+    background: #007bff; /* Primary button color */
     color: white;
-    transition: background 0.3s;
+    transition: background 0.2s ease-in-out, transform 0.1s ease;
+    display: block; /* Make button block to center it easily if needed */
+    width: 100%; /* Full width button */
+    box-sizing: border-box;
+    margin-top: 1rem;
 }
 
-button:hover {
-    background: #0056b3;
+#reset:hover {
+    background: #0056b3; /* Darker shade on hover */
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* Responsive adjustments for controls if needed */
+@media (min-width: 400px) {
+    .controls div {
+        flex-direction: row; /* Label and input side-by-side on larger screens */
+        align-items: center;
+    }
+    .controls label {
+        margin-right: 0.5rem;
+        text-align: right;
+        width: 120px; /* Fixed width for labels for alignment */
+    }
+    .controls select, .controls input[type="text"] {
+        flex-grow: 1; /* Allow input to take remaining space */
+    }
+}
+
+.winning-line {
+    position: absolute;
+    /* background-color is set by JS based on player */
+    border-radius: 4px; /* Smoother edges */
+    transform-origin: center center; /* Rotations for diagonals should be smoother */
+    z-index: 1; /* Ensure it's above cells but below other UI if any */
+    pointer-events: none; /* Should not interfere with clicks */
+    transition: width 0.3s ease-out, height 0.3s ease-out, transform 0.3s ease-out; /* Animation */
+}
+
+#status.winner-text-x, #status.winner-text-o {
+    animation: winnerPulse 0.8s ease-in-out 3; /* Pulse 3 times */
+}
+
+#status.winner-text-x {
+    color: #007bff; /* Blue for X win */
+}
+#status.winner-text-o {
+    color: #fd7e14; /* Orange for O win */
+}
+
+
+@keyframes winnerPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+
+.confetti-container {
+    position: fixed; /* Changed to fixed to cover viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 9999;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00; /* Example color */
+    opacity: 0; /* Start transparent, animation will make it visible */
+    animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+    0% {
+        opacity: 1;
+        transform: translateY(-10vh) rotateZ(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(110vh) rotateZ(720deg); /* Fall down and spin */
+    }
 }
