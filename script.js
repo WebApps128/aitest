@@ -2,6 +2,8 @@ const board = document.getElementById('board');
 const statusText = document.getElementById('status');
 const resetButton = document.getElementById('reset');
 const difficultySelector = document.getElementById('difficulty');
+const animationOverlay = document.getElementById('animation-overlay');
+const animationMessage = document.getElementById('animation-message');
 
 let currentPlayer = 'X';
 let currentDifficulty = 'medium'; // Default difficulty
@@ -68,18 +70,39 @@ function checkResult() {
     }
 
     if (roundWon) {
-        statusText.textContent = `Player ${winningPlayer} wins!`;
+        // statusText.textContent = `Player ${winningPlayer} wins!`; // Keep original status for a moment
         gameActive = false;
         board.style.pointerEvents = 'none'; // Disable board on game over
+        showEndGameAnimation(winningPlayer);
         return;
     }
 
     if (!cells.some(cell => cell.textContent === '') && !roundWon) {
-        statusText.textContent = 'It\'s a draw!';
+        // statusText.textContent = 'It\'s a draw!'; // Keep original status for a moment
         gameActive = false;
         board.style.pointerEvents = 'none'; // Disable board on game over
+        showEndGameAnimation('draw');
         return;
     }
+}
+
+function showEndGameAnimation(winner) {
+    animationOverlay.classList.remove('hidden');
+    animationOverlay.classList.remove('win', 'lose', 'draw'); // Clear previous result classes
+    animationOverlay.classList.add('visible');
+
+    if (winner === 'X') {
+        animationMessage.textContent = 'You Win!';
+        animationOverlay.classList.add('win');
+    } else if (winner === 'O') {
+        animationMessage.textContent = 'AI Wins!';
+        animationOverlay.classList.add('lose');
+    } else {
+        animationMessage.textContent = 'It\'s a Draw!';
+        animationOverlay.classList.add('draw');
+    }
+    // Optional: Add a delay before player can click overlay to reset, or auto-reset
+    // For now, player can click reset button or the overlay (if we add event listener to it)
 }
 
 
@@ -87,8 +110,8 @@ function getAIMove() {
     const boardState = cells.map(cell => cell.textContent || null); // Use null for empty cells for easier processing
     let moveIndex = -1;
 
-    // AI logic based on difficulty (to be added later, for now, defaults to medium)
-    const difficulty = currentDifficulty || 'medium'; // Assume currentDifficulty is defined globally
+    // AI logic based on difficulty
+    const difficulty = currentDifficulty;
 
     if (difficulty === 'easy') {
         moveIndex = getRandomMove(boardState);
@@ -256,6 +279,11 @@ function resetGame() {
     });
     statusText.textContent = `Player ${currentPlayer}'s turn`;
     board.style.pointerEvents = 'auto'; // Re-enable board
+    animationOverlay.classList.add('hidden');
+    animationOverlay.classList.remove('visible');
+    animationMessage.textContent = '';
+
+
     // If AI is 'O' and it's 'O's turn (e.g. player chose 'O' or some other logic), AI should make the first move.
     // For this game, player is always 'X' and starts.
     if (currentPlayer === 'O' && gameActive) { // This condition might not be hit with current setup where X always starts
@@ -268,4 +296,15 @@ resetButton.addEventListener('click', resetGame);
 difficultySelector.addEventListener('change', (e) => {
     currentDifficulty = e.target.value;
     resetGame(); // Reset the game when difficulty changes
+});
+
+// Allow closing animation overlay by clicking on it
+animationOverlay.addEventListener('click', () => {
+    // Only hide if game is over, otherwise it might hide during an animation that shouldn't be interruptable by click
+    if (!gameActive) {
+        animationOverlay.classList.add('hidden');
+        animationOverlay.classList.remove('visible');
+        // Optionally, could also call resetGame() here, or just hide the overlay
+        // and let the user click the reset button. For now, just hide.
+    }
 });

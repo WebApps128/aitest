@@ -128,3 +128,120 @@ button#reset:hover {
 button#reset:active {
     transform: translateY(0);
 }
+
+/* End Game Animation Styles */
+#animation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    pointer-events: none; /* Initially not interactive */
+}
+
+#animation-overlay.visible {
+    opacity: 1;
+    pointer-events: auto; /* Interactive when visible */
+}
+
+#animation-message {
+    font-size: 3rem;
+    font-weight: 600;
+    color: #fff;
+    padding: 20px 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 20px;
+    transform: scale(0.5);
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+#animation-overlay.visible #animation-message {
+    transform: scale(1);
+}
+
+.hidden {
+    display: none !important; /* Use important if needed to override other displays, but prefer class toggling for opacity */
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+
+/* Basic Confetti Animation - can be significantly improved with more particles and JS for randomness */
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 20px;
+    background: #f1c40f; /* Example color */
+    opacity: 0;
+}
+
+#animation-overlay.visible .confetti-piece:nth-child(odd) {
+    background: #3498db;
+}
+#animation-overlay.visible .confetti-piece:nth-child(3n) {
+    background: #e74c3c;
+}
+#animation-overlay.visible .confetti-piece:nth-child(4n) {
+    background: #2ecc71;
+}
+
+
+/* Define more varied keyframe animations for confetti */
+@keyframes fall-1 {
+    0% { transform: translateY(-10vh) translateX(0px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) translateX(20px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes fall-2 {
+    0% { transform: translateY(-10vh) translateX(0px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) translateX(-20px) rotate(-360deg); opacity: 0; }
+}
+
+@keyframes fall-3 { /* Slower, wider sway */
+    0% { transform: translateY(-10vh) translateX(0px) rotate(0deg); opacity: 1; }
+    50% { transform: translateY(50vh) translateX(40px) rotate(180deg); opacity: 0.7; }
+    100% { transform: translateY(110vh) translateX(-30px) rotate(420deg); opacity: 0; }
+}
+
+
+/* Apply animations with delays and variations when overlay is visible */
+/* Make them run once, not infinite, unless it's a continuous celebration */
+#animation-overlay.visible .confetti-piece {
+    opacity: 1; /* Start visible when animation begins */
+    animation-iteration-count: 1; /* Play once */
+    animation-fill-mode: forwards; /* Keep state of last frame (opacity 0) */
+}
+
+#animation-overlay.visible .confetti-piece:nth-child(1) { animation: fall-1 2.5s ease-out 0s; left: 10%; width: 8px; height: 15px;}
+#animation-overlay.visible .confetti-piece:nth-child(2) { animation: fall-2 3s ease-in 0.2s; left: 20%; width: 10px; height: 10px;}
+#animation-overlay.visible .confetti-piece:nth-child(3) { animation: fall-3 3.5s linear 0.4s; left: 30%; width: 12px; height: 20px;}
+#animation-overlay.visible .confetti-piece:nth-child(4) { animation: fall-1 2.8s ease-in-out 0.1s; left: 40%; width: 8px; height: 18px;}
+#animation-overlay.visible .confetti-piece:nth-child(5) { animation: fall-2 3.2s ease-out 0.3s; left: 50%; width: 10px; height: 15px;}
+#animation-overlay.visible .confetti-piece:nth-child(6) { animation: fall-3 3.7s linear 0.5s; left: 60%; width: 12px; height: 12px;}
+#animation-overlay.visible .confetti-piece:nth-child(7) { animation: fall-1 2.6s ease-in 0.25s; left: 70%; width: 9px; height: 17px;}
+#animation-overlay.visible .confetti-piece:nth-child(8) { animation: fall-2 3.1s ease-out 0.15s; left: 80%; width: 11px; height: 11px;}
+#animation-overlay.visible .confetti-piece:nth-child(9) { animation: fall-3 3.6s linear 0.35s; left: 90%; width: 10px; height: 19px;}
+#animation-overlay.visible .confetti-piece:nth-child(10) { animation: fall-1 2.9s ease-in-out 0.05s; left: 15%; width: 12px; height: 16px;}
+
+
+/* Specific styling for win/lose/draw messages if desired */
+#animation-overlay.win #animation-message {
+    /* box-shadow: 0 0 20px #f1c40f; */ /* Example: glow for win */
+    /* Could also change confetti colors based on win/lose/draw by adding classes to overlay */
+}
+#animation-overlay.lose #animation-message {
+    /* box-shadow: 0 0 20px #e74c3c; */
+}
+#animation-overlay.draw #animation-message {
+    /* box-shadow: 0 0 20px #95a5a6; */
+}
