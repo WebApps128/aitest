@@ -1,63 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f0f0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
+    color: #fff;
 }
 
 .game-container {
     text-align: center;
-    background: #fff;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.controls {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.controls label {
+    font-size: 1rem;
+    color: #eee;
+}
+
+#difficulty {
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+#difficulty option {
+    background: #3e2157; /* Darker background for options for better visibility */
+    color: #fff;
+}
+
 
 #board {
     display: grid;
     grid-template-columns: repeat(3, 100px);
     grid-template-rows: repeat(3, 100px);
-    gap: 5px;
-    margin: 1rem auto;
+    gap: 10px; /* Increased gap */
+    margin: 1.5rem auto;
     width: fit-content;
 }
 
 .cell {
     width: 100px;
     height: 100px;
-    background: #e0e0e0;
+    background: rgba(255, 255, 255, 0.2);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2rem;
+    font-size: 3rem; /* Larger X/O */
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s;
+    border-radius: 10px; /* More rounded cells */
+    transition: background 0.3s ease, transform 0.2s ease;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .cell:hover {
-    background: #d0d0d0;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
 }
+
+.cell.X {
+    color: #f1c40f; /* Yellow for X */
+}
+
+.cell.O {
+    color: #3498db; /* Blue for O */
+}
+
 
 #status {
-    font-size: 1.2rem;
-    margin: 1rem 0;
+    font-size: 1.3rem;
+    margin: 1.5rem 0;
+    min-height: 1.5em; /* Prevent layout shift */
+    color: #eee;
 }
 
-button {
-    padding: 0.5rem 1rem;
+button#reset {
+    padding: 0.75rem 1.5rem;
     font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     border: none;
-    border-radius: 5px;
-    background: #007bff;
+    border-radius: 8px;
+    background: #ff758c; /* A vibrant pink/coral */
     color: white;
-    transition: background 0.3s;
+    transition: background 0.3s ease, transform 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
-button:hover {
-    background: #0056b3;
+button#reset:hover {
+    background: #ff5c77;
+    transform: translateY(-2px);
+}
+
+button#reset:active {
+    transform: translateY(0);
 }
